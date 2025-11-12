@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Controle de Serviços</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .tela {
+      display: none;
+    }
+    .tela.ativa {
+      display: block;
+    }
+    table {
+      margin-top: 20px;
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .total {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Tela 1: Nome do Serviço -->
+  <div id="tela1" class="tela ativa">
+    <h2>Nome do Serviço</h2>
+    <input type="text" id="nomeServico" placeholder="Digite o nome do serviço">
+    <br><br>
+    <button onclick="proximo()">Próximo</button>
+  </div>
+
+  <!-- Tela 2: Valor do Atendimento -->
+  <div id="tela2" class="tela">
+    <h2>Valor do Atendimento</h2>
+    <input type="number" id="valorAtendimento" placeholder="Digite o valor (ex: 100.50)">
+    <br><br>
+    <button onclick="proximo()">Próximo</button>
+    <button onclick="voltar()">Voltar</button>
+  </div>
+
+  <!-- Tela 3: Data do Atendimento -->
+  <div id="tela3" class="tela">
+    <h2>Data do Atendimento</h2>
+    <input type="date" id="dataAtendimento">
+    <br><br>
+    <button onclick="salvar()">Salvar</button>
+    <button onclick="voltar()">Voltar</button>
+  </div>
+
+  <!-- Tela 4: Tabela de Serviços -->
+  <div id="tela4" class="tela">
+    <h2>Serviços Registrados</h2>
+    <div class="total">Total: R$ <span id="totalValor">0.00</span></div>
+    <table id="tabelaServicos">
+      <thead>
+        <tr>
+          <th>Serviço</th>
+          <th>Valor (R$)</th>
+          <th>Data</th>
+        </tr>
+      </thead>
+      <tbody id="corpoTabela">
+        <!-- Linhas serão adicionadas aqui -->
+      </tbody>
+    </table>
+    <br>
+    <button onclick="resetar()">Novo Serviço</button>
+  </div>
+
+  <script>
+    let dados = JSON.parse(localStorage.getItem('servicos')) || [];
+
+    function calcularTotal() {
+      const total = dados.reduce((soma, item) => soma + parseFloat(item.valor), 0);
+      document.getElementById("totalValor").textContent = total.toFixed(2);
+    }
+
+    function atualizarTabela() {
+      const corpo = document.getElementById("corpoTabela");
+      corpo.innerHTML = "";
+      dados.forEach(item => {
+        const linha = document.createElement("tr");
+        linha.innerHTML = `
+          <td>${item.nome}</td>
+          <td>${parseFloat(item.valor).toFixed(2)}</td>
+          <td>${item.data}</td>
+        `;
+        corpo.appendChild(linha);
+      });
+      calcularTotal(); // Atualiza o total também
+    }
+
+    function proximo() {
+      const telas = ["tela1", "tela2", "tela3"];
+      for (let i = 0; i < 3; i++) {
+        if (document.getElementById(telas[i]).classList.contains("ativa")) {
+          document.getElementById(telas[i]).classList.remove("ativa");
+          document.getElementById(telas[i+1]).classList.add("ativa");
+          break;
+        }
+      }
+    }
+
+    function voltar() {
+      const telas = ["tela2", "tela3", "tela4"];
+      for (let i = 0; i < 3; i++) {
+        if (document.getElementById(telas[i]).classList.contains("ativa")) {
+          document.getElementById(telas[i]).classList.remove("ativa");
+          document.getElementById(telas[i-1]).classList.add("ativa");
+          break;
+        }
+      }
+    }
+
+    function salvar() {
+      const nome = document.getElementById("nomeServico").value;
+      const valor = document.getElementById("valorAtendimento").value;
+      const data = document.getElementById("dataAtendimento").value;
+
+      if (!nome || !valor || !data) {
+        alert("Preencha todos os campos.");
+        return;
+      }
+
+      dados.push({
+        nome: nome,
+        valor: parseFloat(valor).toFixed(2),
+        data: new Date(data).toLocaleDateString("pt-BR")
+      });
+
+      localStorage.setItem('servicos', JSON.stringify(dados));
+
+      document.getElementById("tela3").classList.remove("ativa");
+      document.getElementById("tela4").classList.add("ativa");
+
+      atualizarTabela();
+    }
+
+    function resetar() {
+      document.getElementById("tela4").classList.remove("ativa");
+      document.getElementById("tela1").classList.add("ativa");
+      document.getElementById("nomeServico").value = "";
+      document.getElementById("valorAtendimento").value = "";
+      document.getElementById("dataAtendimento").value = "";
+    }
+
+    // Carregar dados ao iniciar
+    window.onload = function() {
+      if (dados.length > 0) {
+        atualizarTabela();
+      }
+    };
+  </script>
+
+</body>
+</html>
